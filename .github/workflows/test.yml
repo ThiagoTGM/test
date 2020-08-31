@@ -18,4 +18,4 @@ jobs:
       # Runs a single command using the runners shell
       - name: Run a one-line script
         if: github.event.project_card.content_url != null
-        run: echo "'${{ github.event.project_card.content_url }}'"
+        run: echo "${{ github.event.action }} '${{ github.event.project_card.content_url }}'"
