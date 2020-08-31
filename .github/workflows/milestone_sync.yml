@@ -7,6 +7,8 @@ on:
     types:
       - created
       - closed
+      - reopened
+      - deleted
 
 jobs:
   create:
@@ -15,11 +17,14 @@ jobs:
     if: github.event.action == 'created' && startsWith( github.event.project.name, 'v' )
     steps:
       - name: Create new milestone
-        uses: WyriHaximus/github-action-create-milestone@0.1.0
-        with:
-          title: ${{ github.event.project.name }}
-        env:
-          GITHUB_TOKEN: "${{ github.token }}"
+        run: |
+          response=$( curl -X POST --write-out '%{http_code}' --silent --output /dev/null \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ github.token }}" \
+               https://api.github.com/repos/${{ github.repository }}/milestones \
+               -d '{"title": "${{ github.event.project.name }}"}' )
+          echo "Response code: ${response}"
+          [[ ${response} == 201 ]]
   close:
     name: Close Milestone
     runs-on: ubuntu-latest
@@ -39,6 +44,64 @@ jobs:
           number=$(python get_milestone_number.py ${{ github.event.project.name }})
           echo "::set-output name=number::${number}"
       - name: Close Milestone
-        uses: WyriHaximus/github-action-close-milestone@0.1.0
+        run: |
+          response=$( curl -X PATCH --write-out '%{http_code}' --silent --output /dev/null \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ github.token }}" \
+               https://api.github.com/repos/${{ github.repository }}/milestones/${{ steps.getnumber.outputs.number }} \
+               -d '{"state": "closed"}' )
+          echo "Response code: ${response}"
+          [[ ${response} == 201 ]]
+  reopen:
+    name: Reopen Milestone
+    runs-on: ubuntu-latest
+    if: github.event.action == 'reopened' && startsWith( github.event.project.name, 'v' )
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          number: ${{ steps.getnumber.outputs.number }}
+          python-version: 3.8
+      - name: Install dependencies
+        run: python -m pip install requests
+      - name: Fetch script # Don't need whole repository, just this file
+        run: wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+      - name: Get milestone number
+        id: getnumber
+        run: | 
+          number=$(python get_milestone_number.py ${{ github.event.project.name }})
+          echo "::set-output name=number::${number}"
+      - name: Close Milestone
+        run: |
+          response=$( curl -X PATCH --write-out '%{http_code}' --silent --output /dev/null \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ github.token }}" \
+               https://api.github.com/repos/${{ github.repository }}/milestones/${{ steps.getnumber.outputs.number }} \
+               -d '{"state": "open"}' )
+          echo "Response code: ${response}"
+          [[ ${response} == 201 ]]
+  delete:
+    name: Delete Milestone
+    runs-on: ubuntu-latest
+    if: github.event.action == 'deleted' && startsWith( github.event.project.name, 'v' )
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: python -m pip install requests
+      - name: Fetch script # Don't need whole repository, just this file
+        run: wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+      - name: Get milestone number
+        id: getnumber
+        run: | 
+          number=$(python get_milestone_number.py ${{ github.event.project.name }})
+          echo "::set-output name=number::${number}"
+      - name: Delete Milestone
+        run: |
+          response=$( curl -X DELETE --write-out '%{http_code}' --silent --output /dev/null \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ github.token }}" \
+               https://api.github.com/repos/${{ github.repository }}/milestones/${{ steps.getnumber.outputs.number }} )
+          echo "Response code: ${response}"
+          [[ ${response} == 204 ]]
