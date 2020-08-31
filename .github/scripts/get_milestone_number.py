@@ -18,7 +18,6 @@ number = None
 while number is None:
 
     params = {
-        'state': 'open',
         'sort': 'due_on',
         'direction': 'asc',
         'per_page': 100,
