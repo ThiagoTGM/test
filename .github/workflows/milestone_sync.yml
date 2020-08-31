@@ -41,7 +41,7 @@ jobs:
       - name: Get milestone number
         id: getnumber
         run: | 
-          number=$(python get_milestone_number.py ${{ github.event.project.name }})
+          number=$( python get_milestone_number.py ${{ github.event.project.name }} open )
           echo "::set-output name=number::${number}"
       - name: Close Milestone
         run: |
@@ -68,7 +68,7 @@ jobs:
       - name: Get milestone number
         id: getnumber
         run: | 
-          number=$(python get_milestone_number.py ${{ github.event.project.name }})
+          number=$( python get_milestone_number.py ${{ github.event.project.name }} closed )
           echo "::set-output name=number::${number}"
       - name: Close Milestone
         run: |
@@ -95,7 +95,7 @@ jobs:
       - name: Get milestone number
         id: getnumber
         run: | 
-          number=$(python get_milestone_number.py ${{ github.event.project.name }})
+          number=$( python get_milestone_number.py ${{ github.event.project.name }} all )
           echo "::set-output name=number::${number}"
       - name: Delete Milestone
         run: |
