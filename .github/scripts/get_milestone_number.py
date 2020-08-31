@@ -3,6 +3,7 @@ import requests
 import sys
 
 title = sys.argv[1] # Milestone title
+state = sys.argv[2] # The milestone state (open, closed, or all)
 
 repo = os.environ['GITHUB_REPOSITORY'] # As in, user/repo
 
@@ -18,6 +19,7 @@ number = None
 while number is None:
 
     params = {
+        'state': state,
         'sort': 'due_on',
         'direction': 'asc',
         'per_page': 100,
