@@ -51,7 +51,7 @@ jobs:
                https://api.github.com/repos/${{ github.repository }}/milestones/${{ steps.getnumber.outputs.number }} \
                -d '{"state": "closed"}' )
           echo "Response code: ${response}"
-          [[ ${response} == 201 ]]
+          [[ ${response} == 200 ]]
   reopen:
     name: Reopen Milestone
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
                https://api.github.com/repos/${{ github.repository }}/milestones/${{ steps.getnumber.outputs.number }} \
                -d '{"state": "open"}' )
           echo "Response code: ${response}"
-          [[ ${response} == 201 ]]
+          [[ ${response} == 200 ]]
   delete:
     name: Delete Milestone
     runs-on: ubuntu-latest
