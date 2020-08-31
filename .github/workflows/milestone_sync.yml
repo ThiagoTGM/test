@@ -1,0 +1,44 @@
+# Workflow for syncing milestones to version projects
+
+name: Milestone Sync
+
+on:
+  project:
+    types:
+      - created
+      - closed
+
+jobs:
+  create:
+    name: Create Milestone
+    runs-on: ubuntu-latest
+    if: github.event.action == 'created' && startsWith( github.event.project.name, 'v' )
+    steps:
+      - name: Create new milestone
+        uses: WyriHaximus/github-action-create-milestone@0.1.0
+        with:
+          title: ${{ github.event.project.name }}
+        env:
+          GITHUB_TOKEN: "${{ github.token }}"
+  close:
+    name: Close Milestone
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed' && startsWith( github.event.project.name, 'v' )
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: python -m pip install requests
+      - name: Fetch script # Don't need whole repository, just this file
+        run: wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+      - name: Get milestone number
+        id: getnumber
+        run: | 
+          number=$(python get_milestone_number.py ${{ github.event.project.name }})
+          echo "::set-output name=number::${number}"
+      - name: Close Milestone
+        uses: WyriHaximus/github-action-close-milestone@0.1.0
+        with:
+          number: ${{ steps.getnumber.outputs.number }}
