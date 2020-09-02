@@ -2,7 +2,7 @@ import os
 import requests
 import sys
 
-url = sys.argv[1] # Milestone title
+url = sys.argv[1] # Project url
 
 token = os.environ['GITHUB_TOKEN'] # Github API token
 
