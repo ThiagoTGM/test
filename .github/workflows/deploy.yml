@@ -1,0 +1,61 @@
+# Workflow for deploying a release to GitHub Packages and OSSRH
+
+name: Deploy
+
+on:
+  workflow_dispatch: # Trigger workflow manually
+  push:
+    tags: # Trigger on release tags
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  release:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v1
+        with: # running setup-java again overwrites the settings.xml
+          java-version: 11
+          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+          server-username: NEXUS_USERNAME # env variable for username in deploy
+          server-password: NEXUS_PASSWORD # env variable for token in deploy
+          gpg-private-key: ${{ secrets.gpg_private_key }} # Value of the GPG private key to import
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Build and test with Maven
+        run: mvn clean verify -B -P deploy
+        env:
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Publish to OSSRH
+        run: mvn deploy -B -P deploy,ossrh -Dmaven.test.skip=true
+        env:
+          NEXUS_USERNAME: ${{ secrets.nexus_username }}
+          NEXUS_PASSWORD: ${{ secrets.nexus_password }}
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Set up Github Packages
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Publish to GitHub Packages
+        run: mvn deploy -B -P deploy,github -Dmaven.test.skip=true
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }} 
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Publish site to GitHub Pages
+        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+        run: mvn site -B -P github
+        env:
+          GITHUB_ACTOR: ThiagoTGM # Who will show up as committer
+          GITHUB_TOKEN: ${{ secrets.gh_user_token }}
