@@ -17,11 +17,6 @@ jobs:
     steps:        
       - name: Check out main Git repository
         uses: actions/checkout@v2
-        with:
-          path: main
-      
-      - name: Enter main repository
-        run: cd main
 
       - name: Set up Apache Maven Central
         uses: actions/setup-java@v1
@@ -58,24 +53,23 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }} 
           # GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
 
+      - name: Build project site
+        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+        run: mvn site -B
+
       - name: Check out GH Pages branch
         if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' )
         uses: actions/checkout@v2
         with:
           ref: gh-pages # Github Pages branch
-          path: site
-
-      - name: Build project site
-        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
-        run: mvn site -B
+          path: site-target
 
       - name: Publish site to GitHub Pages
         if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
         run: |
-          cd ..
-          rm -r site/*
-          cp -r -t site main/target/site/*
-          cd site
+          rm -r site-target/*
+          cp -r -t site-target target/site/*
+          cd site-target
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add -A
