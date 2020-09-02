@@ -52,7 +52,7 @@ jobs:
 
   set:
     name: Set Milestone
-    needs: fetch-data
+    needs: fetch_data
     runs-on: ubuntu-latest
     if: startsWith( needs.fetch_data.outputs.project_name, 'v' ) && github.event.action != 'deleted' # Created or converted
     steps:
@@ -67,7 +67,7 @@ jobs:
           [[ ${response} == 200 ]]
   unset:
     name: Unset Milestone
-    needs: fetch-data
+    needs: fetch_data
     runs-on: ubuntu-latest
     if: github.event.action == 'deleted' && needs.fetch_data.outputs.milestone_number == needs.fetch_data.outputs.current_milestone # Only unset if another milestone wasn't already set
     steps:
