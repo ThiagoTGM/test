@@ -14,9 +14,14 @@ jobs:
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      - name: Check out Git repository
+    steps:        
+      - name: Check out main Git repository
         uses: actions/checkout@v2
+        with:
+          path: main
+      
+      - name: Enter main repository
+        run: cd main
 
       - name: Set up Apache Maven Central
         uses: actions/setup-java@v1
@@ -29,9 +34,9 @@ jobs:
           # gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Build and test with Maven
-        run: mvn clean verify -B
-        env:
-          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+        run: mvn clean verify -B # -P deploy
+        # env:
+          # GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
 
       - name: Publish to OSSRH
         run: echo "test" # mvn deploy -B -P deploy,ossrh -Dmaven.test.skip=true
@@ -44,7 +49,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
-          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+          # gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Publish to GitHub Packages
         run: echo "test" # mvn deploy -B -P deploy,github -Dmaven.test.skip=true
@@ -53,9 +58,26 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }} 
           # GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
 
+      - name: Check out GH Pages branch
+        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' )
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages # Github Pages branch
+          path: site
+
+      - name: Build project site
+        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+        run: mvn site -B
+
       - name: Publish site to GitHub Pages
-        # if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
-        run: mvn site -B -P github
-        env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ github.token }} 
+        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+        run: |
+          cd ..
+          rm -r site/*
+          cp -r -t site main/target/site/*
+          cd site
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          git commit -m "Updated project site to ${{ github.ref }}"
+          git push origin gh-pages
