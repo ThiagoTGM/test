@@ -11,7 +11,7 @@ on:
 
 jobs:
   fetch_data:
-    name: Get Project Version
+    name: Get Data
     runs-on: ubuntu-latest
     if: github.event.project_card.content_url != null # Don't even bother if not linked to issue
     outputs:
@@ -37,18 +37,24 @@ jobs:
         run: |
           name=$( python get_project_name.py ${{ github.event.project_card.project_url }} )
           echo "::set-output name=name::${name}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Get milestone number
         id: get_number
         if: startsWith( steps.get_name.outputs.name, 'v' )
         run: |
           number=$( python get_milestone_number.py ${{ steps.get_name.outputs.name }} open )
           echo "::set-output name=number::${number}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Get current milestone
         id: get_milestone
         if: startsWith( steps.get_name.outputs.name, 'v' )
         run: |
           number=$( python get_issue_milestone.py ${{ github.event.project_card.content_url }} open )
           echo "::set-output name=number::${number}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   set:
     name: Set Milestone

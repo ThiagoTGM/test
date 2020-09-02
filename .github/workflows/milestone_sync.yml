@@ -43,6 +43,8 @@ jobs:
         run: | 
           number=$( python get_milestone_number.py ${{ github.event.project.name }} open )
           echo "::set-output name=number::${number}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Close Milestone
         run: |
           response=$( curl -X PATCH --write-out '%{http_code}' --silent --output /dev/null \
@@ -70,6 +72,8 @@ jobs:
         run: | 
           number=$( python get_milestone_number.py ${{ github.event.project.name }} closed )
           echo "::set-output name=number::${number}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Close Milestone
         run: |
           response=$( curl -X PATCH --write-out '%{http_code}' --silent --output /dev/null \
@@ -97,6 +101,8 @@ jobs:
         run: | 
           number=$( python get_milestone_number.py ${{ github.event.project.name }} all )
           echo "::set-output name=number::${number}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Delete Milestone
         run: |
           response=$( curl -X DELETE --write-out '%{http_code}' --silent --output /dev/null \
