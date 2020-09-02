@@ -1,0 +1,82 @@
+# Workflow for syncing milestones to version projects
+
+name: Card Milestone Sync
+
+on:
+  project_card:
+    types:
+      - created
+      - converted
+      - deleted
+
+jobs:
+  fetch_data:
+    name: Get Project Version
+    runs-on: ubuntu-latest
+    if: github.event.project_card.content_url != null # Don't even bother if not linked to issue
+    outputs:
+      project_name: ${{ steps.get_name.outputs.name }}
+      milestone_number: ${{ steps.get_number.outputs.number }}
+      current_milestone: ${{ steps.get_milestone.outputs.number }}
+    steps:
+      - name: Print Content URL # For logging purposes
+        run: echo "${{ github.event.project_card.content_url }}"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: python -m pip install requests
+      - name: Fetch scripts # Don't need whole repository, just this file
+        run: |
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_project_name.py
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_issue_milestone.py
+      - name: Get project name
+        id: get_name
+        run: |
+          name=$( python get_project_name.py ${{ github.event.project_card.project_url }} )
+          echo "::set-output name=name::${name}"
+      - name: Get milestone number
+        id: get_milestone_number.py
+        if: startsWith( steps.get_name.outputs.name, 'v' )
+        run: |
+          number=$( python get_milestone_number.py ${{ steps.get_name.outputs.name }} open )
+          echo "::set-output name=number::${number}"
+      - name: Get current milestone
+        id: get_milestone
+        if: startsWith( steps.get_name.outputs.name, 'v' )
+        run: |
+          number=$( python get_issue_milestone.py ${{ github.event.project_card.content_url }} open )
+          echo "::set-output name=number::${number}"
+
+  set:
+    name: Set Milestone
+    needs: fetch-data
+    runs-on: ubuntu-latest
+    if: startsWith( needs.fetch_data.outputs.project_name, 'v' ) && github.event.action != 'deleted' # Created or converted
+    steps:
+      - name: Set milestone
+        run: |
+          response=$( curl -X PATCH --write-out '%{http_code}' --silent --output /dev/null \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ github.token }}" \
+               ${{ github.event.project_card.content_url }} \
+               -d '{"milestone": "${{ needs.fetch_data.outputs.milestone_number }}"}' )
+          echo "Response code: ${response}"
+          [[ ${response} == 200 ]]
+  unset:
+    name: Unset Milestone
+    needs: fetch-data
+    runs-on: ubuntu-latest
+    if: github.event.action == 'deleted' && needs.fetch_data.outputs.milestone_number == needs.fetch_data.outputs.current_milestone # Only unset if another milestone wasn't already set
+    steps:
+      - name: Unset milestone
+        run: |
+          response=$( curl -X PATCH --write-out '%{http_code}' --silent --output /dev/null \
+               -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token ${{ github.token }}" \
+               ${{ github.event.project_card.content_url }} \
+               -d '{"milestone": null}' )
+          echo "Response code: ${response}"
+          [[ ${response} == 200 ]]
