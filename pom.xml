@@ -39,15 +39,15 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/ThiagoTGM/Forester.git</connection>
-        <developerConnection>scm:git:ssh://github.com/ThiagoTGM/Forester.git</developerConnection>
+        <connection>scm:git:git://github.com/ThiagoTGM/test.git</connection>
+        <developerConnection>scm:git:ssh://github.com/ThiagoTGM/test.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/ThiagoTGM/Forester/tree/master</url>
+        <url>https://github.com/ThiagoTGM/test/tree/master</url>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/ThiagoTGM/Forester/issues</url>
+        <url>https://github.com/ThiagoTGM/test/issues</url>
     </issueManagement>
 
     <properties>
@@ -339,12 +339,12 @@
                 <snapshotRepository>
                     <id>github</id>
                     <name>GitHub Packages</name>
-                    <url>https://maven.pkg.github.com/ThiagoTGM/Forester</url>
+                    <url>https://maven.pkg.github.com/ThiagoTGM/test</url>
                 </snapshotRepository>
                 <repository>
                     <id>github</id>
                     <name>GitHub Packages</name>
-                    <url>https://maven.pkg.github.com/ThiagoTGM/Forester</url>
+                    <url>https://maven.pkg.github.com/ThiagoTGM/test</url>
                 </repository>
             </distributionManagement>
             <build>
