@@ -54,24 +54,58 @@ jobs:
           # GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
 
       - name: Build project site
-        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
         run: mvn site -B
 
+      - name: Tarball project site
+        run: tar -czf site.tar.gz -C target/site .
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: site
+          path: site.tar.gz
+
+  site:
+    name: Update Site
+    needs: release
+    runs-on: ubuntu-latest
+    if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+
+    steps:
       - name: Check out GH Pages branch
-        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' )
         uses: actions/checkout@v2
         with:
           ref: gh-pages # Github Pages branch
-          path: site-target
 
-      - name: Publish site to GitHub Pages
-        if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+      - name: Delete existing site files
+        run: rm -r *
+
+      - name: Download site artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: site
+
+      - name: Unpack the artifact
+        run: tar -xzf site.tar.gz
+
+      - name: Delete the artifact
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: site
+
+      - name: Delete the (local) artifact
+        run: rm site.tar.gz
+
+      - name: Configure git commiter identity
         run: |
-          rm -r site-target/*
-          cp -r -t site-target target/site/*
-          cd site-target
           git config user.name github-actions
           git config user.email github-actions@github.com
+
+      - name: Commit new files
+        run: |
           git add -A
+          git status # For logging purposes
           git commit -m "Updated project site to ${{ github.ref }}"
-          git push origin gh-pages
+
+      - name: Push changes
+        run: git push origin gh-pages
