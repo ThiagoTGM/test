@@ -6,12 +6,14 @@ title = sys.argv[1] # Milestone title
 state = sys.argv[2] # The milestone state (open, closed, or all)
 
 repo = os.environ['GITHUB_REPOSITORY'] # As in, user/repo
+token = os.environ['GITHUB_TOKEN'] # Github API token
 
 print( f"Fetching number of milestone '{title}' of repo '{repo}'", file = sys.stderr )
 
 url = f'https://api.github.com/repos/{repo}/milestones'
 headers = {
-    'Accept': 'application/vnd.github.v3+json'
+    'Accept': 'application/vnd.github.v3+json',
+    'Authorization': f'token {token}'
 }
 
 page = 1
