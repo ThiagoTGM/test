@@ -20,8 +20,10 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: python -m pip install requests
-      - name: Fetch script # Don't need whole repository, just this file
-        run: wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+      - name: Fetch scripts # Don't need whole repository, just these files
+        run: |
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_open_issues.py
       - name: Get milestone number
         id: get_number
         run: | 
