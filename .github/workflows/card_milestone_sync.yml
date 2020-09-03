@@ -1,4 +1,4 @@
-# Workflow for syncing milestones to version projects
+# Workflow for setting milestones to issues when they're added to version projects
 
 name: Card Milestone Sync
 
