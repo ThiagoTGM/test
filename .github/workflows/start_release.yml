@@ -62,7 +62,7 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
       - name: Start release branch
-        run: mvn release-start -B
+        run: mvn gitflow:release-start -B -DpushRemote=true
 
       - name: Close milestone
         run: |
