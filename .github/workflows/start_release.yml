@@ -69,7 +69,7 @@ jobs:
         run: wget -O github-release-notes-generator.jar https://github.com/spring-io/github-release-notes-generator/releases/download/v0.0.2/github-release-notes-generator.jar
       - name: Create release notes
         run: |
-          java -jar /github-release-notes-generator.jar \
+          java -jar github-release-notes-generator.jar \
                 --releasenotes.github.organization=${{ github.repository_owner }} \
                 --releasenotes.github.repository=${{ github.event.repository.name }} \
                 --releasenotes.github.username=${{ github.actor }} \
@@ -77,7 +77,7 @@ jobs:
                 --spring.config.location=.github/release-notes.yml \
                 ${{ steps.get_number.outputs.number }} \
                 release_notes.md
-      - name: Commit release note
+      - name: Commit release notes
         run: |
           git add release_notes.md
           git commit -m "Generated release notes."
