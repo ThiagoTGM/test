@@ -1,6 +1,6 @@
 # Workflow for creating release branches when a version project is closed
 
-name: Milestone Sync
+name: Start Release
 
 on:
   project:
@@ -8,8 +8,8 @@ on:
       - closed
 
 jobs:
-  close:
-    name: Close Milestone
+  start:
+    name: Start Release
     runs-on: ubuntu-latest
     if: startsWith( github.event.project.name, 'v' ) # Only version projects
     steps:
