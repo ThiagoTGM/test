@@ -1,6 +1,6 @@
 # Workflow for creating release branches when a version project is closed
 
-name: Milestone Sync
+name: Start Release
 
 on:
   project:
@@ -8,8 +8,8 @@ on:
       - closed
 
 jobs:
-  close:
-    name: Close Milestone
+  start:
+    name: Start Release
     runs-on: ubuntu-latest
     if: startsWith( github.event.project.name, 'v' ) # Only version projects
     steps:
@@ -20,8 +20,10 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: python -m pip install requests
-      - name: Fetch script # Don't need whole repository, just this file
-        run: wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+      - name: Fetch scripts # Don't need whole repository, just these files
+        run: |
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_number.py
+          wget https://github.com/${{ github.repository }}/raw/master/.github/scripts/get_milestone_open_issues.py
       - name: Get milestone number
         id: get_number
         run: | 
@@ -61,6 +63,27 @@ jobs:
           git config user.email github-actions@github.com
       - name: Start release branch
         run: mvn gitflow:release-start -B
+
+      # Generate release notes
+      - name: Get release note program
+        run: wget -O github-release-notes-generator.jar https://github.com/spring-io/github-release-notes-generator/releases/download/v0.0.2/github-release-notes-generator.jar
+      - name: Create release notes
+        run: |
+          java -jar /github-release-notes-generator.jar \
+                --releasenotes.github.organization=${{ github.repository_owner }} \
+                --releasenotes.github.repository=${{ github.event.repository.name }} \
+                --releasenotes.github.username=${{ github.actor }} \
+                --releasenotes.github.password=${{ github.token }} \
+                --spring.config.location=.github/release-notes.yml \
+                ${{ steps.get_number.outputs.number }} \
+                release_notes.md
+      - name: Commit release note
+        run: |
+          git add release_notes.md
+          git commit -m "Generated release notes."
+      
+      - name: Push release branch
+        run: git push
 
       - name: Close milestone
         run: |
