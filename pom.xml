@@ -7,7 +7,7 @@
 
     <groupId>com.github.thiagotgm</groupId>
     <artifactId>forester</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
 
     <name>Forester</name>
     <description>Library for direct-mapped and hierarchical persistent storage that can be backed by a mix of database services.</description>

@@ -83,7 +83,7 @@ jobs:
           git commit -m "Generated release notes."
       
       - name: Push release branch
-        run: git push
+        run: git push origin HEAD
 
       - name: Close milestone
         run: |

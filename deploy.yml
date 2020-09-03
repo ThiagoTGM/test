@@ -1,0 +1,157 @@
+# Workflow for deploying a release to GitHub Packages and OSSRH
+
+name: Deploy
+
+on:
+  workflow_dispatch: # Trigger workflow manually
+  push:
+    tags: # Trigger on release tags
+      - 'v*'
+
+jobs:
+  deploy:
+    name: Deploy Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v1
+        with: # running setup-java again overwrites the settings.xml
+          java-version: 11
+          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+          server-username: NEXUS_USERNAME # env variable for username in deploy
+          server-password: NEXUS_PASSWORD # env variable for token in deploy
+          gpg-private-key: ${{ secrets.gpg_private_key }} # Value of the GPG private key to import
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Build and test with Maven
+        run: mvn clean verify -B -P deploy
+        env:
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Publish to OSSRH
+        run: mvn deploy -B -P deploy,ossrh -Dmaven.test.skip=true
+        env:
+          NEXUS_USERNAME: ${{ secrets.nexus_username }}
+          NEXUS_PASSWORD: ${{ secrets.nexus_password }}
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Set up Github Packages
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Publish to GitHub Packages
+        run: mvn deploy -B -P deploy,github -Dmaven.test.skip=true
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }} 
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: release
+          path: target/*.jar
+
+      - name: Build project site
+        run: mvn site -B
+
+      - name: Tarball project site
+        run: tar -czf site.tar.gz -C target/site .
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: site
+          path: site.tar.gz
+
+  release:
+    name: Publish release
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) # Only on non-support tags
+    steps:
+      - name: Get tag name
+        id: get_name
+        run: echo "::set-output name=name::${GITHUB_REF##*/}"
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Download release artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: release
+          path: target
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_name.outputs.name }}
+          body_path: release_notes.md
+          draft: true
+          prerelease: false
+      - name: Upload artifact to release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: hub release edit $(find target -type f -name "*" -printf "-a %p ") -m "" "${{ steps.get_name.outputs.name }}"
+      - name: Publish release
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
+      - name: Delete the artifact
+        if: always()
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: release
+
+  site:
+    name: Update Site
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: ( github.event_name == 'push' && !endsWith( github.ref, '-SUPPORT' ) ) || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' ) # Don't publish support versions or non-prod builds
+    steps:
+      - name: Check out GH Pages branch
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages # Github Pages branch
+
+      - name: Delete existing site files
+        run: rm -r *
+
+      - name: Download site artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: site
+
+      - name: Unpack the artifact
+        run: tar -xzf site.tar.gz
+
+      - name: Delete the (local) artifact
+        run: rm site.tar.gz
+
+      - name: Configure git commiter identity
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Commit new files
+        run: |
+          git add -A
+          git commit -m "Updated project site to ${{ github.ref }}"
+
+      - name: Push changes
+        run: git push origin gh-pages
+
+      - name: Delete the artifact
+        if: always()
+        uses: geekyeggo/delete-artifact@v1
+        with:
+          name: site
