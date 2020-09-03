@@ -22,6 +22,15 @@ public class AppTest {
 
     }
     
+    @Tag( "unit" )
+    @Test
+    public void test() {
+
+        System.out.println( "Test test" );
+        assertTrue( true );
+
+    }
+    
     @Tag( "integration" )
     @Test
     public void testIT() {
