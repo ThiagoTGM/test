@@ -39,15 +39,15 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/ThiagoTGM/test.git</connection>
-        <developerConnection>scm:git:ssh://github.com/ThiagoTGM/test.git</developerConnection>
+        <connection>scm:git:git://github.com/ThiagoTGM/Forester.git</connection>
+        <developerConnection>scm:git:ssh://github.com/ThiagoTGM/Forester.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/ThiagoTGM/test/tree/master</url>
+        <url>https://github.com/ThiagoTGM/Forester/tree/master</url>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/ThiagoTGM/test/issues</url>
+        <url>https://github.com/ThiagoTGM/Forester/issues</url>
     </issueManagement>
 
     <properties>
@@ -90,6 +90,11 @@
                 </plugin>
 
                 <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.0.0-M5</version>
+                </plugin>
+
+                <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.0.2</version>
                 </plugin>
@@ -125,6 +130,8 @@
                 <artifactId>gitflow-maven-plugin</artifactId>
                 <version>1.14.0</version>
                 <configuration>
+                    <skipTestProject>false</skipTestProject> <!-- Run unit tests as a sanity check -->
+                    <digitsOnlyDevVersion>true</digitsOnlyDevVersion>
                     <gitFlowConfig>
                         <productionBranch>master</productionBranch>
                         <developmentBranch>develop</developmentBranch>
@@ -136,76 +143,21 @@
                         <origin>origin</origin>
                     </gitFlowConfig>
                 </configuration>
-            </plugin>
-
-            <!-- Unit tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <groups>unit</groups>
-                </configuration>
-            </plugin>
-            
-            <!-- Integration tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <configuration>
-                    <groups>integration</groups>
-                    <includes>
-                        <include>**/*.java</include>
-                    </includes>
-                </configuration>
                 <executions>
                     <execution>
-                        <id>integration-test</id>
+                        <id>start-release</id>
                         <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
+                            <goal>release-start</goal>
                         </goals>
+                        <configuration>
+                            <pushRemote>true</pushRemote>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
 
         </plugins>
     </build>
-
-    <reporting>
-        <plugins>
-    
-            <!-- Test report generation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M5</version>
-                <reportSets>
-                    <reportSet>
-                        <id>unit-tests</id>
-                        <reports>
-                            <report>report-only</report>
-                        </reports>
-                    </reportSet>
-                    <reportSet>
-                        <id>integration-tests</id>
-                        <reports>
-                            <report>failsafe-report-only</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            
-            <!-- Generate cross-references -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jxr-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
-
-        </plugins>
-    </reporting>
 
     <profiles>
     
@@ -339,37 +291,30 @@
                 <snapshotRepository>
                     <id>github</id>
                     <name>GitHub Packages</name>
-                    <url>https://maven.pkg.github.com/ThiagoTGM/test</url>
+                    <url>https://maven.pkg.github.com/ThiagoTGM/Forester</url>
                 </snapshotRepository>
                 <repository>
                     <id>github</id>
                     <name>GitHub Packages</name>
-                    <url>https://maven.pkg.github.com/ThiagoTGM/test</url>
+                    <url>https://maven.pkg.github.com/ThiagoTGM/Forester</url>
                 </repository>
             </distributionManagement>
+        </profile>
+        
+        <!-- Deploy without tests, to be used if tests were performed beforehand -->
+        <profile>
+            <id>skip-tests</id>
             <build>
                 <plugins>
                 
-                    <!-- Deploy site to Github Pages -->
                     <plugin>
-                        <groupId>com.github.github</groupId>
-                        <artifactId>site-maven-plugin</artifactId>
-                        <version>0.12</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <server>github</server>
-                            <message>Updated project site to ${project.version}.</message>
-                            <dryRun>false</dryRun>
+                            <skipTests>true</skipTests>
                         </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>site</goal>
-                                </goals>
-                                <phase>site</phase>
-                            </execution>
-                        </executions>
                     </plugin>
-
+                    
                 </plugins>
             </build>
         </profile>
