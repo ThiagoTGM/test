@@ -7,7 +7,7 @@ number = sys.argv[1] # Milestone number
 repo = os.environ['GITHUB_REPOSITORY'] # As in, user/repo
 token = os.environ['GITHUB_TOKEN'] # Github API token
 
-print( f"Fetching number of milestone '{title}' of repo '{repo}'", file = sys.stderr )
+print( f"Fetching number of milestone {number} of repo '{repo}'", file = sys.stderr )
 
 url = f'https://api.github.com/repos/{repo}/milestones/{number}'
 headers = {
