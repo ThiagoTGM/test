@@ -1,0 +1,25 @@
+# Workflow for testing that the code of incoming pull requests builds and passes tests
+
+name: Style Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v2
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Run style checker
+        run: mvn compile -B -P style,strict
