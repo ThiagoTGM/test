@@ -7,7 +7,7 @@
 
     <groupId>com.github.thiagotgm</groupId>
     <artifactId>forester</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.1-SNAPSHOT</version>
 
     <name>Forester</name>
     <description>Library for direct-mapped and hierarchical persistent storage that can be backed by a mix of database services.</description>
@@ -52,11 +52,19 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>11</maven.compiler.release>
+        <checker.version>3.6.1</checker.version> <!-- Version of the Checker framework used -->
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+            <version>${checker.version}</version>
+        </dependency>
+
+        <!-- Testing dependencies -->
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -68,17 +76,17 @@
     </dependencies>
 
     <build>
-        <!-- lock down plugins versions to avoid using Maven defaults -->
+        <!-- Plugin versions and global configs -->
         <pluginManagement>
             <plugins>
             
-                <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
+				<!-- clean lifecycle -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.1.0</version>
                 </plugin>
                 
-	            <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
+				<!-- default lifecycle -->
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.0.2</version>
@@ -86,10 +94,11 @@
 
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.8.1</version>
                 </plugin>
 
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.0.0-M5</version>
                 </plugin>
@@ -97,6 +106,30 @@
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.0.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.0.0-M5</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
                 </plugin>
 
                 <plugin>
@@ -108,8 +141,14 @@
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>2.8.2</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.6.8</version>
+                </plugin>
                 
-                <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
+				<!-- site lifecycle -->
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.7.1</version>
@@ -120,6 +159,46 @@
                     <version>3.0.0</version>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-report-plugin</artifactId>
+                    <version>3.0.0-M5</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jxr-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                
+                <!-- none or multiple lifecycles -->
+                <plugin>
+                    <groupId>com.amashchenko.maven.plugin</groupId>
+                    <artifactId>gitflow-maven-plugin</artifactId>
+                    <version>1.14.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.1.1</version>
+                    <configuration>
+                        <configLocation>checkstyle.xml</configLocation>
+                        <cacheFile>${project.build.directory}/checkstyle-cachefile</cacheFile>
+                        <headerLocation>LICENSE</headerLocation>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    </configuration>
+                    <dependencies>
+
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>8.36</version>
+                        </dependency>
+
+                    </dependencies>
+                </plugin>
+
             </plugins>
         </pluginManagement>
         <plugins>
@@ -128,7 +207,6 @@
             <plugin>
                 <groupId>com.amashchenko.maven.plugin</groupId>
                 <artifactId>gitflow-maven-plugin</artifactId>
-                <version>1.14.0</version>
                 <configuration>
                     <skipTestProject>false</skipTestProject> <!-- Run unit tests as a sanity check -->
                     <digitsOnlyDevVersion>true</digitsOnlyDevVersion>
@@ -145,8 +223,83 @@
                 </configuration>
             </plugin>
 
+            <!-- Unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <groups>unit</groups>
+                </configuration>
+            </plugin>
+            
+            <!-- Integration tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <groups>integration</groups>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+    
+            <!-- Test report generation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <id>unit-tests</id>
+                        <reports>
+                            <report>report-only</report>
+                        </reports>
+                    </reportSet>
+                    <reportSet>
+                        <id>integration-tests</id>
+                        <reports>
+                            <report>failsafe-report-only</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            
+            <!-- Style report generation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>checkstyle</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            
+            <!-- Generate cross-references -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+            </plugin>
+
+        </plugins>
+    </reporting>
 
     <profiles>
     
@@ -160,7 +313,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>2.4</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -175,7 +327,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.2.0</version>
                         <configuration>
                             <tags>
                                 <!-- Enable unofficial specification tags -->
@@ -213,7 +364,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -260,7 +410,6 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
@@ -290,20 +439,134 @@
             </distributionManagement>
         </profile>
         
-        <!-- Deploy without tests, to be used if tests were performed beforehand -->
+        <!-- Stricter compiler checking -->
+        <!-- NOTE: Project must be compiled, packaged, and installed normally first 
+             as the compiled classes in the jar are used by some of the checkers -->
         <profile>
-            <id>skip-tests</id>
+            <id>lint</id>
             <build>
                 <plugins>
-                
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
+                        <artifactId>maven-clean-plugin</artifactId>
+                        <executions>
+                            
+                            <!-- Remove compiled classes to ensure recompilation -->
+                            <execution>
+                                <id>clean-classes</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>clean</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <skipTests>true</skipTests>
+                            <fork>true</fork> <!-- Must fork or else JVM arguments are ignored. -->
+                            <compilerArguments>
+                                <Xmaxerrs>10000</Xmaxerrs>
+                                <Xmaxwarns>10000</Xmaxwarns>
+                            </compilerArguments>
+                            <!-- Without showWarnings and verbose, maven-compiler-plugin may not show output. -->
+                            <showWarnings>true</showWarnings>
+                            <!-- <verbose>true</verbose> -->
+                            <annotationProcessorPaths>
+
+                                <path>
+                                    <groupId>org.checkerframework</groupId>
+                                    <artifactId>checker</artifactId>
+                                    <version>${checker.version}</version>
+                                </path>
+                                
+                                <!-- Add previously compiled classes for extra checker functionality -->
+                                <path>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${project.artifactId}</artifactId>
+                                    <version>${project.version}</version>
+                                </path>
+
+                            </annotationProcessorPaths>
+                            <annotationProcessors>
+                                <!-- Enabled checkers -->
+                                <!-- See checker list at https://checkerframework.org/manual -->
+                                <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.optional.OptionalChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.lock.LockChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.index.IndexChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.fenum.FenumChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.tainting.TaintingChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.regex.RegexChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker</annotationProcessor>
+                                <annotationProcessor>org.checkerframework.checker.signedness.SignednessChecker</annotationProcessor>
+                            </annotationProcessors>
+                            <compilerArgs>
+                                <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+                                <arg>-Xlint:all,-processing,-requires-transitive-automatic,-requires-automatic</arg>
+                                <arg>-Alint=all</arg>
+                                <arg>-ANullnessChecker_lint=-redundantNullComparison</arg>
+                                <arg>-AreportEvalWarns</arg>
+                            </compilerArgs>
                         </configuration>
                     </plugin>
-                    
+
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Style checking -->
+        <profile>
+            <id>style</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <configuration>
+                            <linkXRef>false</linkXRef>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>validate</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Do not allow warnings (compiler or style) -->
+        <profile>
+            <id>strict</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <failOnWarning>true</failOnWarning>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <configuration>
+                            <violationSeverity>warning</violationSeverity>
+                        </configuration>
+                    </plugin>
+
                 </plugins>
             </build>
         </profile>
