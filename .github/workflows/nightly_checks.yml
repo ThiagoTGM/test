@@ -4,7 +4,7 @@ name: Nightly Checks
 
 on:
   schedule: # Trigger once a day (nightly builds)
-    - cron: '8 2 * * *'
+    - cron: '2 9 * * *'
 
 jobs:
   lint:
