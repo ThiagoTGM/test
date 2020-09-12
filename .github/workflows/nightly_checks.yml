@@ -5,7 +5,7 @@ name: Nightly Checks
 on:
   workflow_dispatch:
   schedule: # Trigger once a day (nightly builds)
-    - cron: '15 2 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
   lint:
