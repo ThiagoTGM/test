@@ -1,0 +1,39 @@
+# Workflow for deploying a release to GitHub Packages and OSSRH
+
+name: Nightly Checks
+
+on:
+  schedule: # Trigger once a day (nightly builds)
+    - cron: '0 0 * * *'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository (Develop)
+        uses: actions/checkout@v2
+        with:
+          ref: 'develop' # Nightly pulls from develop
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Build classes
+        run: mvn clean install -B -Dmaven.test.skip=true # Just need the classes for checker use, no test necessary
+      - name: Run linter/checker
+        run: mvn compile -B -P lint,strict
+  style:
+    name: Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository (Develop)
+        uses: actions/checkout@v2
+        with:
+          ref: 'develop' # Nightly pulls from develop
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Run style checks
+        run: mvn validate -B -P style,strict
