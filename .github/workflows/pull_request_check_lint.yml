@@ -12,7 +12,7 @@ on:
 
 jobs:
   tests:
-    name: Run Tests
+    name: Run Linter
     runs-on: ubuntu-latest
     steps:
       - name: Check out pull request
@@ -22,6 +22,6 @@ jobs:
         with:
           java-version: 11
       - name: Build classes
-        run: mvn clean package -B -Dmaven.test.skip=true # Just need the classes for checker use, no test necessary
+        run: mvn clean install -B -Dmaven.test.skip=true # Just need the classes for checker use, no test necessary
       - name: Run linter/checker
         run: mvn compile -B -P lint,strict
