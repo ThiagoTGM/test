@@ -1,0 +1,27 @@
+# Workflow for testing that the code of incoming pull requests builds and passes tests
+
+name: Linter Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v2
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Build classes
+        run: mvn clean package -B -Dmaven.test.skip=true # Just need the classes for checker use, no test necessary
+      - name: Run linter/checker
+        run: mvn compile -B -P lint,strict
